@@ -13,7 +13,7 @@ import {
 } from "../../third_party/three.module.js";
 import { renderer, getCamera, onResize } from "../../modules/three.js";
 import easings from "../../modules/easings.js";
-import Maf from "../../modules/maf.js";
+import { randomInRange } from "../../modules/maf.js";
 import { ShaderPass } from "../../modules/shader-pass.js";
 import { getFBO } from "../../modules/fbo.js";
 import { shader as finalVS } from "./final-vs.js";
@@ -42,7 +42,7 @@ for (let z = 0; z < 3; z++) {
       mesh.castShadow = mesh.receiveShadow = true;
       group.add(mesh);
       mesh.position.set(x - 1, y - 1, z - 1);
-      const offset = Maf.randomInRange(0, 1);
+      const offset = randomInRange(0, 1);
       cubes.push({ id, mesh, x, y, z, offset });
       id++;
     }
@@ -124,14 +124,14 @@ function draw(startTime) {
       easings.InOutCubic((time - 0.5 * loopDuration) / (0.5 * loopDuration));
   }
 
-  const scale = Maf.randomInRange(0, 1);
+  const scale = randomInRange(0, 1);
   cubes.forEach((cube) => {
     let f = 0;
     if (time < 0.5 * loopDuration) {
       const t = Math.max(0, time - 0.1 * cube.offset * loopDuration);
       f = 1 - easings.InOutQuint(t / (0.5 * loopDuration));
     } else {
-      cube.offset = scale * Maf.randomInRange(0, 1);
+      cube.offset = scale * randomInRange(0, 1);
     }
     const s = cube.id === 13 ? f2 : f;
     cube.mesh.scale.setScalar(Math.max(s, 0.00001));
@@ -177,4 +177,6 @@ onResize((w, h) => {
   finalPass.setSize(rw, rh);
 });
 
-export { draw, loopDuration, renderer, camera };
+async function init() {}
+
+export { draw, loopDuration, renderer, camera, init };
