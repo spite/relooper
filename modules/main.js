@@ -1,4 +1,4 @@
-import { draw, renderer, init } from "../loops/hen-2/loop.js";
+import { draw, renderer, init } from "../loops/hen-4/loop.js";
 import { resize } from "../modules/three.js";
 
 let startTime = 0;
