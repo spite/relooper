@@ -137,8 +137,8 @@ const lightMaterial = new MeshStandardMaterial({
   // wireframe: !true
 });
 
-const geometry2 = new TorusKnotBufferGeometry(2, 0.5, 200, 50);
-//const geometry2 = new RoundedBoxGeometry(1, 1, 1, 0.05, 5);
+// const geometry2 = new TorusKnotBufferGeometry(2, 0.5, 200, 50);
+const geometry2 = new RoundedBoxGeometry(1, 1, 1, 0.05, 5);
 
 const mesh = new Mesh(geometry2, lightMaterial); // new MeshNormalMaterial({ wireframe: !true }));
 scene.add(mesh);
