@@ -20,33 +20,48 @@ import { shader as softLight } from "../../shaders/soft-light.js";
 import { shader as colorDodge } from "../../shaders/color-dodge.js";
 import { shader as rgbShift } from "../../shaders/rgb-shift.js";
 
-const aberrationFragmentShader = `
+const aberrationFragmentShader = `#version 300 es
 precision highp float;
+
 uniform vec2 resolution;
 uniform sampler2D inputTexture;
-varying vec2 vUv;
+
+in vec2 vUv;
+
+out vec4 fragColor;
+
 ${rgbShift}
+
 void main() {
   vec4 color = rgbShift(inputTexture, vUv, vec2(30.));
-  gl_FragColor = color;
+  fragColor = color;
 }
 `;
 
-const finalFragmentShader = `
+const finalFragmentShader = `#version 300 es
 precision highp float;
+
 uniform vec2 resolution;
 uniform sampler2D inputTexture;
 uniform float vignetteBoost;
 uniform float vignetteReduction;
-varying vec2 vUv;
+
+in vec2 vUv;
+
+out vec4 fragColor;
+
 ${vignette}
+
 ${fxaa}
+
 ${softLight}
+
 ${colorDodge}
+
 void main() {
   vec4 color = fxaa(inputTexture, vUv);
   vec4 finalColor = softLight(color, vec4(vec3(vignette(vUv, vignetteBoost, vignetteReduction)),1.));
-  gl_FragColor = finalColor;
+  fragColor = finalColor;
 }
 `;
 
@@ -79,6 +94,7 @@ class Post {
         frontTexture: { value: this.frontFBO.texture },
         normalsTexture: { value: this.normalsFBO.texture },
         colorTexture: { value: this.colorFBO.texture },
+        time: { value: 0 },
       },
       vertexShader: orthoVertexShader,
       fragmentShader: waterFragmentShader,
@@ -156,6 +172,7 @@ class Post {
   render(scene, camera) {
     scene.overrideMaterial = this.baseMaterial;
     this.renderer.setClearColor(0xff00ff, 0);
+    this.baseMaterial.uniforms.time.value = 0.001 * performance.now();
     this.baseMaterial.uniforms.showNormals.value = 0;
     this.baseMaterial.side = BackSide;
     this.renderer.setRenderTarget(this.backFBO);
@@ -176,6 +193,7 @@ class Post {
 
     this.renderer.setRenderTarget(null);
 
+    this.waterPass.shader.uniforms.time.value = 0.001 * performance.now();
     this.waterPass.render();
     this.finalPass.render();
     this.aberrationPass.render(true);

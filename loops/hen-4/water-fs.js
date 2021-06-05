@@ -1,6 +1,6 @@
 import noise3d from "../../shaders/noise3d.js";
 
-const shader = `
+const shader = `#version 300 es
 precision highp float;
 
 uniform sampler2D backTexture;
@@ -10,12 +10,14 @@ uniform sampler2D colorTexture;
 
 uniform float time;
 
-varying vec2 vUv;
+in vec2 vUv;
+
+out vec4 fragColor;
 
 ${noise3d}
 
 float map( in vec3 p ){
-  vec3 q = p;//p - vec3(0.0,0.1,1.0)*iTime;
+  vec3 q = p;// - vec3(0.0,0.1,1.0)*time;
   float f;
     f  = 0.50000*noise3d( q );
     q = q*2.02;
@@ -29,9 +31,9 @@ void main() {
   vec3 lightColor = vec3(41.,86.,80.)/255.;
   vec3 darkColor = vec3(32.,37.,42.)/255.;
 
-  vec4 normal = texture2D(normalsTexture, vUv);
-  vec4 back = texture2D(backTexture,vUv);
-  vec4 front = texture2D(frontTexture,vUv);
+  vec4 normal = texture(normalsTexture, vUv);
+  vec4 back = texture(backTexture,vUv);
+  vec4 front = texture(frontTexture,vUv);
   vec3 dir = back.xyz-front.xyz;
   float ld = length(dir);
   dir = refract(dir,normalize(normal.xyz), .8);
@@ -50,15 +52,18 @@ void main() {
     float v = clamp(map(1.5*p),0.,1.);
     n += v/fSteps;
   }
-  n *= 5.;
-  vec3 color = texture2D(colorTexture, vUv).xyz;
+  n *= 10.;
+  vec3 color = vec3(0.);//texture(colorTexture, vUv).xyz;
   float mask = clamp(ld,0.,1.);
-  gl_FragColor.rgb = mix(darkColor,lightColor*n,mask);
-  gl_FragColor.rgb += color * back.a;
+  fragColor.rgb = mix(darkColor,lightColor*n,mask);
+  fragColor.rgb += color * back.a;
   float rim = smoothstep(.5,1.,(1.-ld));
-  gl_FragColor.rgb += lightColor *rim * back.a;
-  gl_FragColor.rgb = mix(vec3(.3), gl_FragColor.rgb, back.a);
-  gl_FragColor.a = 1.;
+  fragColor.rgb += lightColor *rim * back.a;
+  fragColor.rgb = mix(vec3(.3), fragColor.rgb, back.a);
+  fragColor.a = 1.;
+
+  // fragColor.rgb =1.- vec3(rim+clamp(d*n, 0., 1.));
+  // fragColor.rgb = normal.rgb;
 }`;
 
 export { shader };
