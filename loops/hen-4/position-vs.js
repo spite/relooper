@@ -146,9 +146,9 @@ vec3 pos(float alpha, float beta) {
     r1 * sin(alpha)
   );
 
-  float a = 0.5 + .2 * sin(alpha); // semi-diameter
+  float a = 0.5;// + .2 * sin(alpha); // semi-diameter
   float b = 0.2; // semi-diameter
-  float n = 3.5 + 2. * sin(3.*alpha+time); // curve (<1, 1-2, >2)
+  float n = 3.5;// + 2. * sin(3.*alpha+time); // curve (<1, 1-2, >2)
   float gamma = -beta;
   float c = cos(gamma);
   float s = sin(gamma);
@@ -159,7 +159,7 @@ vec3 pos(float alpha, float beta) {
   vec3 dir = vec3(0., 0., 1.);
 
   vec3 v = vec3(rx, ry, 0);
-  v = applyAxisAngle(v, dir, 1. * alpha + time);
+  v = applyAxisAngle(v, dir, 1. * alpha + 0.*time);
   v = applyAxisAngle(v, up, alpha);
   vec3 d = normalize(v);
   vec3 p = base + v;

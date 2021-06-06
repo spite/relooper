@@ -9,6 +9,10 @@ import {
   BackSide,
   FrontSide,
   Vector2,
+  Vector3,
+  DataTexture3D,
+  RedFormat,
+  FloatType,
 } from "../../third_party/three.module.js";
 import { getFBO } from "../../modules/fbo.js";
 import { shader as orthoVertexShader } from "../../shaders/ortho.js";
@@ -19,6 +23,7 @@ import { shader as fxaa } from "../../shaders/fxaa.js";
 import { shader as softLight } from "../../shaders/soft-light.js";
 import { shader as colorDodge } from "../../shaders/color-dodge.js";
 import { shader as rgbShift } from "../../shaders/rgb-shift.js";
+import { perlin3 } from "../../third_party/perlin.js";
 
 const aberrationFragmentShader = `#version 300 es
 precision highp float;
@@ -65,6 +70,71 @@ void main() {
 }
 `;
 
+function perlin(x, y, z) {
+  // return 0.5 + 0.5 * perlin3(x, y, z);
+  const s = 2.02;
+  return 0.5 * perlin3(x, y, z) + 0.25 * perlin3(s * x, s * y, s * z);
+}
+
+const normal = new Vector3();
+
+function perlinNormal(x, y, z) {
+  const step = 0.001;
+  normal.x = perlin(x - step, y, z) - perlin(x + step, y, z);
+  normal.y = perlin(x, y - step, z) - perlin(x, y + step, z);
+  normal.z = perlin(x, y, z - step) - perlin(x, y, z + step);
+
+  normal.normalize();
+  return normal;
+}
+
+function generatePerlin(data, ox, oy, oz) {
+  let ptr = 0;
+  const s = 0.05;
+
+  for (let z = 0; z < depth; z++) {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const ox = x - 0.5 * width;
+        const oy = y - 0.5 * height;
+        const oz = z - 0.5 * depth;
+        const alpha = Math.atan2(ox, oz);
+        const d = Math.sqrt(ox ** 2 + oz ** 2);
+        const beta = d / 1;
+        const px = s * (0.5 + d * Math.cos(alpha + beta));
+        const py = s * (0.5 + oy);
+        const pz = s * (0.5 + d * Math.sin(alpha + beta));
+
+        data[ptr] = perlin(px, py, pz);
+        /*
+        perlinNormal(ox + s * x, oy + s * y, oz + s * z);
+        data2[ptr*3+0] = normal.x;
+        data2[ptr*3+1] = normal.y;
+        data2[ptr*3+2] = normal.z;
+        */
+        ptr++;
+      }
+    }
+  }
+}
+
+const size = 128;
+const width = size;
+const height = size;
+const depth = size;
+
+const data = new Float32Array(width * height * depth);
+generatePerlin(data, 0, 0, 0);
+
+const texture = new DataTexture3D(data, width, height, depth);
+texture.format = RedFormat;
+texture.type = FloatType;
+texture.minFilter = LinearFilter;
+texture.magFilter = LinearFilter;
+texture.wrapS = ClampToEdgeWrapping;
+texture.wrapT = ClampToEdgeWrapping;
+texture.unpackAlignment = 1;
+
 class Post {
   constructor(renderer, baseMaterial, lightMaterial, params = {}) {
     this.renderer = renderer;
@@ -90,6 +160,7 @@ class Post {
 
     this.waterShader = new RawShaderMaterial({
       uniforms: {
+        volumeMap: { value: texture },
         backTexture: { value: this.backFBO.texture },
         frontTexture: { value: this.frontFBO.texture },
         normalsTexture: { value: this.normalsFBO.texture },
