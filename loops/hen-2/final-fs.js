@@ -1,13 +1,15 @@
 import { shader as rgbSplit } from "../../shaders/rgb-split.js";
 
-const shader = `
+const shader = `#version 300 es
 precision highp float;
 
 uniform vec2 resolution;
 uniform sampler2D tInput;
 uniform float time;
 
-varying vec2 vUv;
+in vec2 vUv;
+
+out vec4 fragColor;
 
 vec2 hash( vec2 p ) {
 	p = vec2( dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)) );
@@ -19,8 +21,8 @@ ${rgbSplit}
 void main() {
   // vec2 dir = vec2(10., 10.)/resolution;
   vec2 dir = vec2(.5 - vUv)*50./resolution;  
-  gl_FragColor = rgbSplit(tInput, vUv, dir);
-  gl_FragColor.rgb += .01*hash(vUv + vec2(time, 0.)).x;
+  fragColor = rgbSplit(tInput, vUv, dir);
+  fragColor.rgb += .01*hash(vUv + vec2(time, 0.)).x;
 }
 `;
 
