@@ -21,6 +21,7 @@ import {
   BufferGeometry,
   IcosahedronBufferGeometry,
   TorusKnotBufferGeometry,
+  MeshBasicMaterial,
 } from "../../third_party/three.module.js";
 import { renderer, getCamera, onResize } from "../../modules/three.js";
 import easings from "../../modules/easings.js";
@@ -34,11 +35,14 @@ import { perlin3 } from "../../third_party/perlin.js";
 import { OrbitControls } from "../../third_party/OrbitControls.js";
 import { PositionMaterial } from "../../modules/PositionMaterial.js";
 import { RoundedBoxGeometry } from "../../third_party/RoundedBoxGeometry.js";
+import { generateGeometry } from "../../modules/polyhedra.js";
 
 import { Post } from "./post.js";
 
 import { shader as positionsFragmentShader } from "./position-fs.js";
 import { shader as positionsVertexShader } from "./position-vs.js";
+import { shader as meshFragmentShader } from "./mesh-fs.js";
+import { shader as meshVertexShader } from "./mesh-vs.js";
 
 const loopDuration = 5;
 let theme = 0;
@@ -47,8 +51,8 @@ const camera = getCamera();
 const scene = new Scene();
 const geometry = new BufferGeometry();
 
-const SEGMENTS = 100;
-const SIDES = 18;
+const SEGMENTS = 400;
+const SIDES = 72;
 const indices = [];
 const vertices = new Float32Array(SIDES * SEGMENTS * 3);
 
@@ -76,28 +80,28 @@ for (let segment = 0; segment < SEGMENTS; segment++) {
     //   b0 *
     //   Math.sign(Math.sin(gamma0));
 
-    const x = r1 * Math.cos(alpha);
-    const y = 0;
-    const z = r1 * Math.sin(alpha);
+    // const x = r1 * Math.cos(alpha);
+    // const y = 0;
+    // const z = r1 * Math.sin(alpha);
 
-    // superellipse / Lamé curve | https://en.wikipedia.org/wiki/Superellipse
-    const a = 0.4; // semi-diameter
-    const b = 0.2; // semi-diameter
-    const n = 3.5; // curve (<1, 1-2, >2)
-    const gamma = -beta;
-    const c = Math.cos(gamma);
-    const s = Math.sin(gamma);
-    const rx = Math.pow(Math.abs(c), 2 / n) * a * Math.sign(c);
-    const ry = Math.pow(Math.abs(s), 2 / n) * b * Math.sign(s);
-    // const rx = 0.5 * Math.cos(gamma) + 0.05 * Math.cos(6 * gamma);
-    // const ry = 0.5 * Math.sin(gamma) + 0.05 * Math.sin(6 * gamma);
+    // // superellipse / Lamé curve | https://en.wikipedia.org/wiki/Superellipse
+    // const a = 0.2; // semi-diameter
+    // const b = 0.2; // semi-diameter
+    // const n = 3.5; // curve (<1, 1-2, >2)
+    // const gamma = -beta;
+    // const c = Math.cos(gamma);
+    // const s = Math.sin(gamma);
+    // const rx = Math.pow(Math.abs(c), 2 / n) * a * Math.sign(c);
+    // const ry = Math.pow(Math.abs(s), 2 / n) * b * Math.sign(s);
+    // // const rx = 0.5 * Math.cos(gamma) + 0.05 * Math.cos(6 * gamma);
+    // // const ry = 0.5 * Math.sin(gamma) + 0.05 * Math.sin(6 * gamma);
 
-    v.set(rx, ry, 0);
-    v.applyAxisAngle(dir, 1 * alpha);
-    v.applyAxisAngle(up, -alpha);
-    vertices[ptr] = x + v.x;
-    vertices[ptr + 1] = y + v.y;
-    vertices[ptr + 2] = z + v.z;
+    // v.set(rx, ry, 0);
+    // v.applyAxisAngle(dir, 1 * alpha);
+    // v.applyAxisAngle(up, -alpha);
+    vertices[ptr] = alpha; //x + v.x;
+    vertices[ptr + 1] = beta; //y + v.y;
+    vertices[ptr + 2] = 0; //z + v.z;
     ptr += 3;
   }
 }
@@ -119,26 +123,93 @@ geometry.setAttribute("position", new BufferAttribute(vertices, 3));
 geometry.computeFaceNormals();
 geometry.computeVertexNormals();
 
+const box = new Mesh(
+  new BoxBufferGeometry(3.5, 3.5, 3.5),
+  new MeshBasicMaterial({ color: 0xff00ff, wireframe: true })
+);
+const scene2 = new Scene();
+scene2.add(box);
+
 const prepassMaterial = new RawShaderMaterial({
   uniforms: {
     showNormals: { value: 0 },
+    time: { value: 0 },
   },
   vertexShader: positionsVertexShader,
   fragmentShader: positionsFragmentShader,
   side: BackSide,
 });
 
+// const lightMaterial = new RawShaderMaterial({
+//   //color: 0x202020,
+//   //metalness: 0.1,
+//   //roughness: 0.135,
+//   // normalMap: normalTexture,
+//   // normalScale: new THREE.Vector2(.75, .75),
+//   // wireframe: !true
+//   vertexShader: meshVertexShader,
+//   fragmentShader: meshFragmentShader,
+// });
 const lightMaterial = new MeshStandardMaterial({
   color: 0x202020,
   metalness: 0.1,
-  roughness: 0.135,
-  // normalMap: normalTexture,
-  // normalScale: new THREE.Vector2(.75, .75),
-  // wireframe: !true
+  roughness: 0.3,
 });
 
-// const geometry2 = new TorusKnotBufferGeometry(2, 0.5, 200, 50);
-const geometry2 = new RoundedBoxGeometry(1, 1, 1, 0.05, 5);
+function squareTurbulence(v) {
+  return 1 - Math.pow(v, 2);
+}
+
+function ridgedTurbulence(v) {
+  return 1 - Math.abs(v);
+}
+
+function gaussianTurbulence(v) {
+  return 1 - Math.exp(-Math.pow(v, 2));
+}
+
+function fbm(x, y, z) {
+  let value = 0;
+  let amplitude = 1;
+  for (let i = 0; i < 8; i++) {
+    value += amplitude * Math.abs(perlin3(x, y, z));
+    x *= 2;
+    y *= 2;
+    z *= 2;
+    amplitude *= 0.5;
+  }
+  return ridgedTurbulence(value);
+}
+
+function map(x, y, z, t) {
+  const s1 = 0.5;
+  const s2 = 1.5;
+  const r = 1;
+  return 0.1 * (fbm(s1 * x, s1 * y, s1 * z) + fbm(s2 * x, s2 * y, s2 * z));
+}
+
+// const geometry2 = geometry;
+// const geometry2 = new TorusKnotBufferGeometry(1.5, 0.5, 200, 50);
+// const geometry2 = new RoundedBoxGeometry(3.5, 3.5, 3.5, 0.5, 5);
+// const geometry2 = new IcosahedronBufferGeometry(1.75, 10);
+// const geometry2 = new BoxBufferGeometry(3.5, 3.5, 3.5);
+const geometry2 = generateGeometry();
+// const positions = geometry2.attributes.position.array;
+// const normals = geometry2.attributes.normal.array;
+// const p = new Vector3();
+// const n = new Vector3();
+// for (let i = 0; i < positions.length; i += 3) {
+//   p.set(positions[i], positions[i + 1], positions[i + 2]);
+//   n.set(normals[i], normals[i + 1], normals[i + 2]);
+//   const d = map(p.x, p.y, p.z, 0);
+//   n.multiplyScalar(1 * d);
+//   p.add(n);
+//   positions[i] = p.x;
+//   positions[i + 1] = p.y;
+//   positions[i + 2] = p.z;
+// }
+// geometry.computeVertexNormals();
+// geometry.computeFaceNormals();
 
 const mesh = new Mesh(geometry2, lightMaterial); // new MeshNormalMaterial({ wireframe: !true }));
 scene.add(mesh);
@@ -213,6 +284,10 @@ function draw(startTime) {
   // finalPass.render(true);
 
   post.render(scene, camera);
+  // renderer.autoClear = false;
+  // renderer.clear(false, true, true);
+  // renderer.render(scene2, camera);
+  // renderer.autoClear = true;
 
   // renderer.render(scene, camera);
 }
