@@ -73,7 +73,12 @@ void main() {
 function perlin(x, y, z) {
   // return 0.5 + 0.5 * perlin3(x, y, z);
   const s = 2.02;
-  return 0.5 * perlin3(x, y, z) + 0.25 * perlin3(s * x, s * y, s * z);
+  const s2 = 0.51;
+  return (
+    perlin3(x, y, z) +
+    perlin3(s * x, s * y, s * z) +
+    perlin3(s2 * x, s2 * y, s2 * z)
+  );
 }
 
 const normal = new Vector3();
@@ -100,7 +105,7 @@ function generatePerlin(data, ox, oy, oz) {
         const oz = z - 0.5 * depth;
         const alpha = Math.atan2(ox, oz);
         const d = Math.sqrt(ox ** 2 + oz ** 2);
-        const beta = d / 1;
+        const beta = (0 * d) / 10;
         const px = s * (0.5 + d * Math.cos(alpha + beta));
         const py = s * (0.5 + oy);
         const pz = s * (0.5 + d * Math.sin(alpha + beta));
