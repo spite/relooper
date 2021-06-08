@@ -182,11 +182,11 @@ void main() {
   float alpha = position.x;
   float beta = position.y;
 
-  vec3 p = pos(alpha, beta);
+  vec3 p = position.xyz;//pos(alpha, beta);
 
   vec4 mvPosition = modelViewMatrix * vec4( p, 1.0 );
   if(showNormals==1.) {
-    vColor.rgb = norm(p, alpha, beta);
+    vColor.rgb = normal;//norm(p, alpha, beta);
   } else {
     vColor.xyz = p.xyz;
   }
