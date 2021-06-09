@@ -149,10 +149,10 @@ function map(p) {
   // let cube = sdRoundBox(p, new Vector3(1, 1, 1), 0.1);
   // let sphere = sdSphere(p, 5);
   // let torus = sdTorus(p, new Vector2(1, 0.5));
-  // const icosahedron = fIcosahedron(p, 1, 50);
-  const octahedron = sdOctahedron(p, 1) - 0.1;
+  const icosahedron = fIcosahedron(p, 1, 50);
+  // const octahedron = sdOctahedron(p, 1) - 0.1;
   // const dodecahedron = fDodecahedron(p, 1, 100);
-  return octahedron;
+  return icosahedron;
 }
 
 const p = new Vector3();
