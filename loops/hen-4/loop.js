@@ -190,10 +190,10 @@ function map(x, y, z, t) {
 
 // const geometry2 = geometry;
 // const geometry2 = new TorusKnotBufferGeometry(1.5, 0.5, 200, 50);
-// const geometry2 = new RoundedBoxGeometry(3.5, 3.5, 3.5, 0.5, 5);
+const geometry2 = new RoundedBoxGeometry(3.5, 3.5, 3.5, 0.5, 5);
 // const geometry2 = new IcosahedronBufferGeometry(1.75, 10);
 // const geometry2 = new BoxBufferGeometry(3.5, 3.5, 3.5);
-const geometry2 = generateGeometry();
+// const geometry2 = generateGeometry();
 // const positions = geometry2.attributes.position.array;
 // const normals = geometry2.attributes.normal.array;
 // const p = new Vector3();
