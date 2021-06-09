@@ -112,12 +112,18 @@ function perlin(x, y, z) {
   // return 0.5 + fbm(s1 * x, s1 * y, s1 * z) + 0.5 * fbm(s2 * x, s2 * y, s2 * z);
 
   // return 0.5 + 0.5 * perlin3(x, y, z);
+
+  const ds = 0.1;
+  const dds = 3;
+  const tx = x + dds * perlin3(ds * x + 35345, ds * y, ds * z);
+  const ty = y + dds * perlin3(ds * x, ds * y - 345, ds * z);
+  const tz = z + dds * perlin3(ds * x, ds * y, ds * z + 3456);
   const s = 2.02;
   const s2 = 0.51;
   return (
-    perlin3(x, y, z) +
-    perlin3(s * x, s * y, s * z) +
-    perlin3(s2 * x, s2 * y, s2 * z)
+    perlin3(tx, ty, tz) +
+    perlin3(s * tx, s * ty, s * tz) +
+    perlin3(s2 * tx, s2 * ty, s2 * tz)
   );
 }
 
