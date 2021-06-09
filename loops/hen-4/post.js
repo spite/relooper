@@ -70,7 +70,47 @@ void main() {
 }
 `;
 
+function squareTurbulence(v) {
+  return 1 - Math.pow(v, 2);
+}
+
+function ridgedTurbulence(v) {
+  return 1 - Math.abs(v);
+}
+
+function gaussianTurbulence(v) {
+  return 1 - Math.exp(-Math.pow(v, 2));
+}
+
+function fbm(x, y, z) {
+  let value = 0;
+  let amplitude = 1;
+  for (let i = 0; i < 8; i++) {
+    value += amplitude * Math.abs(perlin3(x, y, z));
+    x *= 2;
+    y *= 2;
+    z *= 2;
+    amplitude *= 0.5;
+  }
+  return value; //ridgedTurbulence(value);
+}
+
+// function map(x, y, z, t) {
+//   const s1 = 0.5;
+//   const s2 = 1.5;
+//   const r = 1;
+//   return 0.1 * (fbm(s1 * x, s1 * y, s1 * z) + fbm(s2 * x, s2 * y, s2 * z));
+// }
+
+const t = new Vector3();
 function perlin(x, y, z) {
+  // t.set(x, y, z);
+  // return voronoi(t);
+
+  // // const s1 = 5;
+  // const s2 = 15;
+  // return 0.5 + fbm(s1 * x, s1 * y, s1 * z) + 0.5 * fbm(s2 * x, s2 * y, s2 * z);
+
   // return 0.5 + 0.5 * perlin3(x, y, z);
   const s = 2.02;
   const s2 = 0.51;
